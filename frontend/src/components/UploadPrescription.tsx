@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react';
 import axios from 'axios';
-import axios from 'axios';
 // Actually the previous code used native events, sticking to native to avoid dep issues
 import { Upload, Camera, Loader2, ScanLine, X, FileImage } from 'lucide-react';
 import { Button, Card, CardContent } from './ui';
