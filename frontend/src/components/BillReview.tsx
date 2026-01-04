@@ -20,7 +20,8 @@ export const BillReview: React.FC<BillReviewProps> = ({ billData, onReset }) => 
         setIsConfirming(true);
         setError(null);
         try {
-            await axios.post(`/api/bills/${billData.bill_id}/confirm`, {
+            const apiUrl = import.meta.env.VITE_API_URL || '';
+            await axios.post(`${apiUrl}/api/bills/${billData.bill_id}/confirm`, {
                 pharmacist_pin: pin
             });
             setConfirmed(true);

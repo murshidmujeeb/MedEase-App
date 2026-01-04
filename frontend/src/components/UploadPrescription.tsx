@@ -56,8 +56,9 @@ export const UploadPrescription: React.FC<UploadPrescriptionProps> = ({ onScanCo
         const formData = new FormData();
         formData.append('file', file);
 
+        const apiUrl = import.meta.env.VITE_API_URL || '';
         try {
-            const response = await axios.post<ScanResponse>('/api/prescriptions/scan', formData, {
+            const response = await axios.post<ScanResponse>(`${apiUrl}/api/prescriptions/scan`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
