@@ -12,7 +12,8 @@ export const InventoryDashboard: React.FC = () => {
     useEffect(() => {
         const fetchInventory = async () => {
             try {
-                const response = await axios.get('/api/inventory', {
+                const apiUrl = import.meta.env.VITE_API_URL || '';
+                const response = await axios.get(`${apiUrl}/api/inventory`, {
                     params: { search }
                 });
                 setMedicines(response.data.medicines);
@@ -74,8 +75,8 @@ export const InventoryDashboard: React.FC = () => {
                                         <td className="px-4 py-3 text-center font-mono">{med.current_stock}</td>
                                         <td className="px-4 py-3 text-center">
                                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${med.stock_status === 'LOW'
-                                                    ? 'bg-red-100 text-red-700'
-                                                    : 'bg-green-100 text-green-700'
+                                                ? 'bg-red-100 text-red-700'
+                                                : 'bg-green-100 text-green-700'
                                                 }`}>
                                                 {med.stock_status === 'LOW' ? '⚠️ Low Stock' : 'In Stock'}
                                             </span>
