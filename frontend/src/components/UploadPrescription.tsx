@@ -58,16 +58,30 @@ export const UploadPrescription: React.FC<UploadPrescriptionProps> = ({ onScanCo
                 video: { facingMode: 'environment' } // Prefer rear camera on mobile
             });
             streamRef.current = stream;
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-            }
             setIsCameraOpen(true);
             setError(null);
+            // Note: videoRef.current is not available yet, we handle srcObject in useEffect
         } catch (err) {
             console.error("Camera error:", err);
             setError("Could not access camera. Please allow permissions.");
         }
     };
+
+    // Attach stream to video element when it becomes available
+    React.useEffect(() => {
+        if (isCameraOpen && streamRef.current && videoRef.current) {
+            videoRef.current.srcObject = streamRef.current;
+        }
+    }, [isCameraOpen]);
+
+    // Cleanup on unmount
+    React.useEffect(() => {
+        return () => {
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop());
+            }
+        };
+    }, []);
 
     const stopCamera = () => {
         if (streamRef.current) {
@@ -127,32 +141,42 @@ export const UploadPrescription: React.FC<UploadPrescriptionProps> = ({ onScanCo
             <h1 className="text-3xl font-bold text-slate-900 mb-2 text-center">Pharmacy Automation</h1>
             <p className="text-slate-500 text-center mb-8">AI-Powered Prescription Analysis</p>
 
-            {/* Camera Overlay */}
+            {/* Camera Overlay - Full Screen Immersive */}
             {isCameraOpen && (
-                <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center p-4">
-                    <div className="relative w-full max-w-lg bg-black rounded-lg overflow-hidden shadow-2xl">
+                <div className="fixed inset-0 z-[100] bg-black flex flex-col">
+                    {/* Header */}
+                    <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 bg-gradient-to-b from-black/50 to-transparent">
+                        <div className="text-white font-medium">Take Photo</div>
+                        <Button
+                            onClick={stopCamera}
+                            variant="ghost"
+                            className="text-white hover:bg-white/20 rounded-full h-10 w-10 p-0"
+                        >
+                            <X className="h-6 w-6" />
+                        </Button>
+                    </div>
+
+                    {/* Video Area */}
+                    <div className="flex-1 relative flex items-center justify-center bg-black">
                         <video
                             ref={videoRef}
                             autoPlay
                             playsInline
-                            className="w-full h-auto bg-slate-900"
+                            className="w-full h-full object-cover"
                         />
+                    </div>
 
-                        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-6">
-                            <Button
-                                onClick={stopCamera}
-                                variant="secondary"
-                                className="bg-white/20 text-white hover:bg-white/30 backdrop-blur"
-                            >
-                                <X className="mr-2 h-4 w-4" /> Cancel
-                            </Button>
-                            <Button
-                                onClick={captureImage}
-                                className="bg-blue-600 hover:bg-blue-700 text-white rounded-full h-14 w-14 p-0 flex items-center justify-center shadow-lg border-4 border-white/20"
-                            >
-                                <Camera className="h-6 w-6" />
-                            </Button>
-                        </div>
+                    {/* Controls Footer */}
+                    <div className="h-32 bg-black flex items-center justify-center pb-8 pt-4">
+                        <Button
+                            onClick={captureImage}
+                            className="bg-transparent hover:bg-transparent p-0 rounded-full border-0 shadow-none group relative w-20 h-20"
+                        >
+                            {/* Outer Ring */}
+                            <div className="absolute inset-0 rounded-full border-4 border-white transition-transform group-active:scale-95"></div>
+                            {/* Inner Circle */}
+                            <div className="absolute inset-2 rounded-full bg-white transition-transform group-active:scale-90"></div>
+                        </Button>
                     </div>
                 </div>
             )}
