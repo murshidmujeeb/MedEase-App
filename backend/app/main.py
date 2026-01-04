@@ -7,7 +7,8 @@ app = FastAPI(title=settings.PROJECT_NAME)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    # Allow all origins for this demo. In production, list specific domains e.g. ["https://medease-app.vercel.app"]
+    allow_origins=["https://medease-app.vercel.app", "http://localhost:5173", "http://localhost:3000"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
