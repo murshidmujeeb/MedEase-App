@@ -16,6 +16,11 @@ export const UploadPrescription: React.FC<UploadPrescriptionProps> = ({ onScanCo
     const [error, setError] = useState<string | null>(null);
     const [isDragActive, setIsDragActive] = useState(false);
 
+    // Camera State
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const videoRef = React.useRef<HTMLVideoElement>(null);
+    const streamRef = React.useRef<MediaStream | null>(null);
+
     const onDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         setIsDragActive(false);
@@ -44,6 +49,52 @@ export const UploadPrescription: React.FC<UploadPrescriptionProps> = ({ onScanCo
         setFile(null);
         setPreview(null);
         setError(null);
+    };
+
+    // Camera Functions
+    const startCamera = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' } // Prefer rear camera on mobile
+            });
+            streamRef.current = stream;
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+            }
+            setIsCameraOpen(true);
+            setError(null);
+        } catch (err) {
+            console.error("Camera error:", err);
+            setError("Could not access camera. Please allow permissions.");
+        }
+    };
+
+    const stopCamera = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+        setIsCameraOpen(false);
+    };
+
+    const captureImage = () => {
+        if (!videoRef.current) return;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = videoRef.current.videoWidth;
+        canvas.height = videoRef.current.videoHeight;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.drawImage(videoRef.current, 0, 0);
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    const capturedFile = new File([blob], `camera_capture_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                    handleFileSelect(capturedFile);
+                    stopCamera();
+                }
+            }, 'image/jpeg', 0.85);
+        }
     };
 
     const handleScan = async () => {
@@ -75,6 +126,36 @@ export const UploadPrescription: React.FC<UploadPrescriptionProps> = ({ onScanCo
         <div className="max-w-xl mx-auto mt-10 p-6">
             <h1 className="text-3xl font-bold text-slate-900 mb-2 text-center">Pharmacy Automation</h1>
             <p className="text-slate-500 text-center mb-8">AI-Powered Prescription Analysis</p>
+
+            {/* Camera Overlay */}
+            {isCameraOpen && (
+                <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center p-4">
+                    <div className="relative w-full max-w-lg bg-black rounded-lg overflow-hidden shadow-2xl">
+                        <video
+                            ref={videoRef}
+                            autoPlay
+                            playsInline
+                            className="w-full h-auto bg-slate-900"
+                        />
+
+                        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-6">
+                            <Button
+                                onClick={stopCamera}
+                                variant="secondary"
+                                className="bg-white/20 text-white hover:bg-white/30 backdrop-blur"
+                            >
+                                <X className="mr-2 h-4 w-4" /> Cancel
+                            </Button>
+                            <Button
+                                onClick={captureImage}
+                                className="bg-blue-600 hover:bg-blue-700 text-white rounded-full h-14 w-14 p-0 flex items-center justify-center shadow-lg border-4 border-white/20"
+                            >
+                                <Camera className="h-6 w-6" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <Card
                 className={`border-2 border-dashed transition-colors overflow-hidden ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-slate-300'
@@ -115,7 +196,7 @@ export const UploadPrescription: React.FC<UploadPrescriptionProps> = ({ onScanCo
                                     accept="image/*,.pdf"
                                     onChange={onFileChange}
                                 />
-                                <Button variant="outline">
+                                <Button variant="outline" onClick={startCamera}>
                                     <Camera className="w-4 h-4 mr-2" />
                                     Camera
                                 </Button>
