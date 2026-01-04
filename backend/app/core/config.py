@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = os.getenv("POSTGRES_USER", "postgres")
     POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "password")
     POSTGRES_DB: str = os.getenv("POSTGRES_DB", "pharmacy_db")
-    SQLALCHEMY_DATABASE_URI: Optional[str] = None
+    SQLALCHEMY_DATABASE_URI: Optional[str] = "sqlite:///./pharmacy.db"
     
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
     
@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     def database_url(self) -> str:
         if self.SQLALCHEMY_DATABASE_URI:
             return self.SQLALCHEMY_DATABASE_URI
+        # Fallback to Postgres only if specifically configured env vars are present (logic optional, but sticking to URI priority)
         return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
 
     class Config:
